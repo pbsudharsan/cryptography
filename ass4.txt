@@ -1,0 +1,92 @@
+                                                            Assignment-4
+#include "oracle.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+// Read a ciphertext from a file, send it to the server, and get back a result.
+// If you run this using the challenge ciphertext (which was generated correctly),
+// you should get back a 1. If you modify bytes of the challenge ciphertext, you
+// may get a different result...
+// Note that this code assumes a 3-block ciphertext.
+int main(int argc, char *argv[]) {
+  unsigned char ctext[48]; // allocate space for 48 bytes, i.e., 3 blocks
+unsigned char test[32]; 
+ unsigned char m[32];
+  unsigned char backup[48];
+unsigned  g[48];
+  int i, tmp, ret,j,k,pad=0,x;
+unsigned char l
+  FILE *fpIn;
+  if (argc != 2) {
+    printf("Usage: sample <filename>\n");
+    return -1;
+  }
+  fpIn = fopen(argv[1], "r");
+  for(i=0;i<48;i++) {
+    fscanf(fpIn, "%02x", &tmp);
+    ctext[i] = tmp;
+    g[i] = tmp;
+test[i]=tmp;
+  }
+ fclose(fpIn);
+ Oracle_Connect(); /* Note: this only needs to be called
+		       ** once **, at the beginning of your program;
+		       you can then use Oracle_Send as many times
+		       as you like, and end by calling Oracle_Disconnect once */
+  int d= 0;  
+  for( i=16; i<32; i++)
+{printf(“ctext[%d]=%02x”,I,test[i]); 
+ test[i]+=1;
+       ret = Oracle_Send(test, 3); 
+  	if(ret == 0) {	
+   d=i;         
+ break;
+           }  	
+  }
+  d=32-d;
+  printf("padding  bytes in last block = %d\n", d);
+  }
+    for(i = 20; i >= 16; i--) {
+  	for(int j = i+1;j < 32;j++) {
+  		ctext[j] = ctext[j] ^ (unsigned char)(pad) ^ (unsigned char)(pad+1);
+  	}
+  	
+  	l= ctext[i];
+  	for(int k = 0;k < 256;k++) {
+  		ctext[i] = (unsigned char)k;
+  		ret = Oracle_Send(ctext, 3);
+  		if(ret == 1) {
+  			x = k;
+  			m [i] = (unsigned char)x ^ (unsigned char)(padding+1) ^ l;
+  			break;
+  		}
+  	}
+  	pad ++; 
+  printf("last block is %s\n ",m);
+
+  for(i = 15; i>=0;i--) {
+  	for( j = i+1;j < 16;j++) {
+  		g[j] = ctext[j] ^ (unsigned char)(pad) ^ (unsigned char)(pad+1);
+  	}	
+  	unsigned char l = ctext[i];
+  	for( k = 0;k < 256;k++) {
+  		g[i] = (unsigned char)k;
+  		ret = Oracle_Send(ctext, 2);
+  		if(ret == 1) {
+  			x= k;
+  			m[i] = (unsigned char)x ^ (unsigned char)(pad+1) ^ l;
+  			break;
+  		}
+  	}
+  	pad ++;  
+  } printf(“Message is %s “,m)
+  Oracle_Disconnect();
+}
+In this assignment I first found out the padding length of the last block and then to get the message of block 2 I manipulated the bits of iv so  as to  induce a padding and then find the bytes of the message Since I got padding as there are 5 bytes of message for the last block.Since there are only 5 bytes we can try to modify the c1 to make the oracle server return 1 
+
+Output:
+ctext[0]=9fctext[1]=0bctext[2]=13ctext[3]=94ctext[4]=48ctext[5]=41ctext[6]=a8ctext[7]=32ctext[8]=b2ctext[9]=42ctext[10]=1bctext[11]=9ectext[12]=afctext[13]=6dctext[14]=98ctext[15]=36ctext[16]=81ctext[17]=3ectext[18]=c9ctext[19]=d9ctext[20]=44ctext[21]=a5ctext[22]=c8ctext[23]=34ctext[24]=7actext[25]=7cctext[26]=a6ctext[27]=9actext[28]=a3ctext[29]=4dctext[30]=8dctext[31]=c0ctext[32]=c0ctext[33]=c0ctext[34]=c0ctext[35]=c0ctext[36]=c0ctext[37]=c0ctext[38]=c0ctext[39]=c0ctext[40]=c0ctext[41]=c0ctext[42]=c0ctext[43]=c0ctext[44]=c0ctext[45]=c0ctext[46]=c0ctext[47]=c0Connected to server successfully.
+ctext[16]=82 padding bytes in last block =11  
+last block is  A. =)
+Message is Yay! You get an A. =)

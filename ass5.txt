@@ -1,0 +1,67 @@
+1.
+void cipher_inverse(byte *key, byte *x)	{
+	byte ka[8], kb[8], tmp[8];
+	int i;
+	/* ka is the first half of key; kb is the second half */
+        for (i=0; i<8; i++) {
+                ka[i] = key[i];
+                kb[i] = key[i+8];
+        }
+	/* apply mixing permutation */
+        for (i=0; i < 8; i++)
+                tmp[i] = x[i];	
+        for (i=0; i < 64; i+=4) {
+                BIT_SET(x,i,BIT_AT(tmp,i));
+                BIT_SET(x,(((i+1)+60)%64),BIT_AT(tmp,(i+1)));
+                BIT_SET(x,(((i+2)+56)%64),BIT_AT(tmp,(i+2)));
+                BIT_SET(x,(((i+3)+52)%64),BIT_AT(tmp,(i+3)));
+        }
+/* Apply S-boxes to the intermediate */
+        for (i=0; i<8; i++)
+                Sbox_inverse(i,x);	
+// Xor Second Sub Key
+        for(i=0;i<8;i++)
+                x[i] ^= kb[i];
+	
+
+2 . #include <stdio.h> #include <stdlib.h> #include "cipher.h"  	/* 4-bit to 4-bit S-boxes implemented as look-up tables.    8 distinct S-boxes; each S-box will be used twice */
+byte S1[16] = {14, 0, 5, 7, 9, 10, 1, 6, 12, 2, 3, 4, 13, 15, 11, 8};
+byte S2[16] = { 4, 2, 9, 11, 1, 0, 7, 12, 14, 3, 8, 10, 6, 5, 13, 15};
+byte S3[16] = { 2, 1, 11,10,15, 0, 12, 6, 7, 14, 4, 5, 3, 13, 9, 8};
+byte S4[16] = { 9, 11, 6, 14, 4, 10, 3, 1, 13, 5, 12, 8, 0, 15, 2, 7};
+byte S5[16] = { 2, 5, 11, 15, 10, 13, 7, 0, 3, 1, 14, 12, 8, 4, 9, 6};
+byte S6[16] = { 6, 10, 13, 15, 2, 14,11, 7, 9,8, 0, 1, 3, 5, 12, 4};
+byte S7[16] = {4, 0, 1, 7, 8,  12, 11, 15, 5, 10, 2, 13, 3, 9, 6, 14};
+byte S8[16] = {12, 1, 8, 3, 15, 4, 7, 6, 14, 10, 9, 5, 2, 11, 13, 0};
+void print_string(byte *x, int num_bytes);
+// prints a byte array
+void Sbox(int i, byte *x); /* applies the appropriate S-box to the ith byte of x */ void hexdump(byte *buf) {  int i;  for (i = 0; i < 8; i++) {
+    if (i > 0)
+      printf(":"); printf("%02X", buf[i]);  }   printf("\n");
+}
+/* Note: no input validation is done in cipher().    It expects key to be a 16-byte string, and x to be    an 8-byte string. As usual, buffer overflows are out of scope. */
+void cipher(byte * key, byte * x){
+  byte ka[8], kb[8], tmp[8];
+  int i;
+  /* ka is the first half of key; kb is the second half */ 
+  for (i=0; i<8; i++) { ka[i] = key[i]; kb[i] = key[i+8];   }   /* XOR first sub-ke	- */   for (i=0; i<8; i++)    x[i] ^= kb[i];
+ /* apply mixing permutation */   for (i=0; i < 8; i++)     tmp[i] = x[i];
+  for (i=0; i < 64; i+=4) {     BIT_SET(x,i,BIT_AT(tmp,i));
+    BIT_SET(x,(((i+1)+60)%64),BIT_AT(tmp,i+1));   BIT_SET(x,(((i+2)+56)%64),BIT_AT(tmp,i+2));
+   BIT_SET(x,(((i+3)+52)%64),BIT_AT(tmp,i+3));   } /* Apply S-boxes to the intermediate */   for (i=0; i<8; i++)     Sbox(i,x);
+  /* XOR second sub-key */   for (i=0; i<8; i++)     x[i] ^= ka[i]; } /* Note: no input validation is done.    The input x is expected to be an 8-byte string */ void Sbox(int i, byte *x){   nibble in1, in2, out1, out2;   in1 = x[i] >> 4; // left nibble of x[i]  in2 = x[i] & 15; // right nibble of x[i]   /* Our S-boxes operate on nibbles. So to substitute a byte,      we just substitute both its nibbles */   if ((i==0) || (i==7))     x[i] = 16*S1[in1] + S2[in2];
+  if ((i==1) || (i==6))     x[i] = 16*S3[in1] + S4[in2];   if ((i==2) || (i==5))     x[i] = 16*S5[in1] + S6[in2];   if ((i==3) || (i==4))   x[i] = 16*S7[in1] + S8[in2]; 
+  return;
+} // Note: no input validation is done. void print_string(byte * x, int num_bytes){   int i;  for (i=0; i < 8*num_bytes; i++) {     printf("%d", BIT_AT(x,i));     if ((i%8) == 7) printf(" ");  }   printf("\n");   return;
+} main(){   byte key[16]={0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F};   byte x[8]={0x02,0xE1,0xB2,0x99,0x34,0x33,0x7B,0x1F};   int i;   cipher(key, x);   for(i=0;i<8;i++)  printf("%02x",x[i]); }
+First and second question are the same. The output got using the cipher function  for cipher inverse is 
+554433221100ffee
+
+
+3.For this we backtrack using the output given.Since we need to find just the first nibble we can consider only the first 4 bits.First we xor for all the possible values of kb from 0-f and do mix and match or do mix and match first and then xor. We will get a list of values  for k2  and we xor this with the input value to get k1.
+ We look for the intersection  of  all  the i/o pairs as we get  a  set of values for each of the i/o pairs. The matching one will be the key bits  as the  key is same for all the pairs.
+		  
+We get it as 1111  
+ie in hex   f	
+
+

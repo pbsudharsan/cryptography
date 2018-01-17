@@ -1,0 +1,57 @@
+                                                             Assignment 3
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "oracle.h"
+#define HOST "128.8.130.16"
+#define PORT 49106
+void hexdump(unsigned char *m, int len); /* len is in bytes */
+void hexdump(unsigned char *m, int len) {
+      int i;
+      FILE *fpin;
+     fpin=fopen("check.txt","a"); 
+ for (i = 0; i < len; i ++)
+	{	fprintf(fpin, "%02X", m[i]);}
+	fprintf(fpin, "\n");
+     
+    fclose(fpin);
+}
+int main(void) {
+	int j= 0;
+	unsigned char message[48] = {0x6f,0x63,0x74,0x6f,0x62,0x65,0x72,0x0};
+	unsigned char ctext[64];
+         while(j<65535)
+          {j++;
+	if (Oracle_Connect(HOST, PORT))
+		exit(-1);
+	/* the second argument of Oracle_Send is the number of
+	   16-byte blocks in message. ctext will contain one
+	   additional block */
+	if (Oracle_Send(message, 3, ctext))  {
+	  fprintf(stderr, "invalid send\n");
+	  exit(1);
+	}
+	Oracle_Disconnect();
+	hexdump(ctext, 4*16);} /* in this example, ctext is 4 blocks long */
+}
+C1=P1^F(Key,IV)C1=P1^F(Key,IV)
+C2=P2^F(Key,IV)C2=P2^F(Key,IV)
+Where he can see the values C1C1, C2C2. With those, he can then compute:
+C1^C2=P1^P2
+
+I have modified the stub.c file to print all possible ivs into a file so that it would be easier to search. Now 
+I matched this 32 bytes with that of the ciphertext since the counter is zero and remaining bytes are zero. I have to match for combinations of the first 3 bits only.
+I have passed a  message so as to get the cipher of the known message. The message I passed is october in hex.
+I xor the resulting cipher text with the cipher text of the known message(october)  so as to get  the key
+And I finally  decrypt the cipher by xoring the  key with the cipher text.
+
+47800000000000000000000000000000c4e3325539bc25eed1c220b8076cd9d1e8800704c572f818c0ede30f2ee1c31536e38619a5e1ee7e00f30acdc6dc179f
+Xoring ignoring the first 16 bytes  with the  cipher text we get
+596f7520666f756e642074686520737570657220736563726574206d6573736167652c2077656c6c4f071b01074453
+Xoring this with the  hex values of the message we passed in this case october
+6f63746f626572
+596f7520666f756e642074686520737570657220736563726574206d6573736167652c2077656c6c200b0c1a0a434453
+596f7520666f756e642074686520737570657220736563726574206d6573736167652c2077656c6c20646f6e65212121
+Converting this to text  we get
+
+You found the super secret message, well done!!!
